@@ -31,6 +31,9 @@ namespace MvcClient
                                             options.ClientSecret = "secret";
                                             options.ResponseType = "code id_token";
                                             options.SignInScheme = "MyCookieAuthenticationScheme";
+                                            options.SaveTokens = true;
+                                            
+                                            options.GetClaimsFromUserInfoEndpoint = true;
                                         });
 
             services.AddMvc();

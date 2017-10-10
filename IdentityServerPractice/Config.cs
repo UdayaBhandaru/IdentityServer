@@ -67,7 +67,12 @@ namespace IdentityServer
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile
+                    },
+                    PostLogoutRedirectUris =
+                    {
+                        "https://localhost:44387/signout-callback-oidc"
                     }
+                    //AlwaysIncludeUserClaimsInIdToken=true
                 }
 
             };
