@@ -2,4 +2,14 @@
  
 }
 
-<h2> Welcome @ViewData["userName"] </h2>
+<h2> Welcome @ViewData["userName"] . You are Logged in</h2>
+
+@if (User.IsInRole("Admin"))
+{
+
+}
+@if (User.IsInRole("User"))
+{
+
+}
+

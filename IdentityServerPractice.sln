@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityServer", "IdentityServerPractice\IdentityServer.csproj", "{6767CA5B-4EEF-4479-A896-5D29D5DBCC35}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityServer", "IdentityServerPractice\IdentityServer.csproj", "{6767CA5B-4EEF-4479-A896-5D29D5DBCC35}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{30C98DD8-B8A1-4017-8CBD-E7DED39F8802}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MvcClient", "MvcClient\MvcClient.csproj", "{E9292194-8519-4A1F-88C0-0B98A475F024}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MvcClient", "MvcClient\MvcClient.csproj", "{E9292194-8519-4A1F-88C0-0B98A475F024}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

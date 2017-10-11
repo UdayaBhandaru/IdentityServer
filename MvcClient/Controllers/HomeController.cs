@@ -9,10 +9,20 @@ using Microsoft.AspNetCore.Authorization;
 using IdentityModel.Client;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+
 namespace MvcClient.Controllers
 {
     public class HomeController : Controller
     {
+        private OpenIdConnectOptions _configuration;
+        public HomeController(IOptions<OpenIdConnectOptions> optionsAccessor)
+        {
+            _configuration = optionsAccessor.Value;
+        }
+        
         public IActionResult Index()
         {
             return View();
@@ -22,8 +32,12 @@ namespace MvcClient.Controllers
         public async Task<IActionResult> About()
         {
             await WriteOutIdentityInformation();
-            ViewData["userid"] =await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.UserId);
-            ViewData["userName"]  = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.Username);
+            var discoverClient = new DiscoveryClient(_configuration.Authority);
+            var metaDataResponmse = await discoverClient.GetAsync();
+            var userInfoEndPoint = new UserInfoClient(metaDataResponmse.UserInfoEndpoint);
+            var accessToken = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+            var response = await userInfoEndPoint.GetAsync(accessToken);
+            ViewData["username"] = response.Claims?.FirstOrDefault(x => x.Type == "given_name")?.Value;
             return View();
         }
 
