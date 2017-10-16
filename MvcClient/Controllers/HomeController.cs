@@ -12,15 +12,20 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
+using MvcClient.HttpClientService;
 
 namespace MvcClient.Controllers
 {
     public class HomeController : Controller
     {
-        private OpenIdConnectOptions _configuration;
-        public HomeController(IOptions<OpenIdConnectOptions> optionsAccessor)
+        private ApiClientOption _apiClientOption;
+        private IHttpClientProvider _httpClientProvider;
+        public HomeController(IHttpClientProvider httpClientProvider,IOptions<ApiClientOption> apiClientOption)
         {
-            _configuration = optionsAccessor.Value;
+            _apiClientOption = apiClientOption.Value;
+           _httpClientProvider = httpClientProvider;
         }
         
         public IActionResult Index()
@@ -32,26 +37,95 @@ namespace MvcClient.Controllers
         public async Task<IActionResult> About()
         {
             await WriteOutIdentityInformation();
-            var discoverClient = new DiscoveryClient(_configuration.Authority);
-            var metaDataResponmse = await discoverClient.GetAsync();
-            var userInfoEndPoint = new UserInfoClient(metaDataResponmse.UserInfoEndpoint);
-            var accessToken = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
-            var response = await userInfoEndPoint.GetAsync(accessToken);
-            ViewData["username"] = response.Claims?.FirstOrDefault(x => x.Type == "given_name")?.Value;
+           
+
+            //
+            var httpClient = await _httpClientProvider.GetClient(_apiClientOption.ApiClientBaseAddress);
+            var content = await httpClient.GetStringAsync("values\\Welcome");
+            ViewData["Content"] = content;
             return View();
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            this.HttpContext.SignOutAsync("MyCookieAuthenticationScheme");
-            this.HttpContext.SignOutAsync("oidc");
+           
+            var accessToken = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+            var refreshToken = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.RefreshToken);
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                var tokenrevocationClient = await _httpClientProvider.GetTokenRevocationClient();
+                var refreshAccessTokenResponse = await tokenrevocationClient.RevokeAccessTokenAsync(accessToken);
+                
+            }
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                var tokenrevocationClient = await _httpClientProvider.GetTokenRevocationClient();
+                var refreshRefreshTokenResponse = await tokenrevocationClient.RevokeRefreshTokenAsync(refreshToken);
+            }
+            //var response = await userInfoEndPoint.GetAsync(accessToken);
+            await this.HttpContext.SignOutAsync("cookies");
+           await this.HttpContext.SignOutAsync("oidc");
             return View("Contact");
         }
 
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            
         }
+
+        [Authorize]
+        public async Task<IActionResult> Login()
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+
+            var httpClient = await _httpClientProvider.GetClient(_apiClientOption.ApiClientBaseAddress);
+            var content = await httpClient.GetAsync("values\\Admin");
+
+            if(content.IsSuccessStatusCode)
+            {
+                ViewBag.Content = "Authorized";
+            }
+            
+            return View();
+        }
+
+        [Authorize(Roles ="Administrator")]
+        public async Task<IActionResult> Admin()
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+
+            var httpClient = await _httpClientProvider.GetClient(_apiClientOption.ApiClientBaseAddress);
+            var content = await httpClient.GetStringAsync("values\\Admin");
+
+            ViewBag.Content = content;
+            return View("Contribute");
+        }
+
+        [Authorize(Policy = "IsContributor")]
+        public async Task<IActionResult> Contribute()
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+
+            var httpClient = await _httpClientProvider.GetClient(_apiClientOption.ApiClientBaseAddress);
+            var content = await httpClient.GetStringAsync("values\\Contribute");
+
+            ViewBag.Content = content;
+            return View("Contribute");
+        }
+
+        [Authorize(Roles = "Reader")]
+        public async Task<IActionResult> Reader()
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+
+            var httpClient = await _httpClientProvider.GetClient(_apiClientOption.ApiClientBaseAddress);
+            var content = await httpClient.GetStringAsync("values\\Reader");
+
+            ViewBag.Content = content;
+            return View("Contribute");
+        }
+
 
         public async Task WriteOutIdentityInformation()
         {

@@ -1,15 +1,27 @@
-﻿@{
- 
-}
-
-<h2> Welcome @ViewData["userName"] . You are Logged in</h2>
-
-@if (User.IsInRole("Admin"))
-{
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@{
+    var authorize = await AuthorizationService.AuthorizeAsync(User, "IsContributor");
 
 }
-@if (User.IsInRole("User"))
-{
 
+<h2>  @ViewData["content"] </h2>
+
+
+@if (authorize.Succeeded)
+{
+    if (User.IsInRole("Administrator"))
+    {
+        <a asp-action="Admin" asp-controller="Home">If you wan't to do Admin Work . Click here. </a>
+    }
+    <a asp-action="Contribute" asp-controller="Home">If you wan't to do Contribute Work .Click here. </a>
+}
+else if (User.IsInRole("Reader"))
+{
+    <a asp-action="Reader" asp-controller="Home">Reader. </a>
+}
+else
+{
+    <a asp-action="Admin" asp-controller="Home">Welcome. </a>
 }
 

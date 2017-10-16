@@ -1,0 +1,16 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+
+@{
+    var authorize =ViewBag.Content=="Authorize";
+}
+
+@if(!authorize)
+{
+    <img src="~/images/Agility Logo with out text.jpg" height="300" width="300"/>
+}
+else
+{
+<img src="~/images/agility_gil_logo1.jpg" height="300" width="300"/>
+}
+

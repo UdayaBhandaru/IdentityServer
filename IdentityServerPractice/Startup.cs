@@ -1,5 +1,9 @@
-﻿using IdentityServer.Data;
+﻿using System;
+using System.Collections.Generic;
+using IdentityServer.Data;
 using IdentityServer.Data.Models;
+using IdentityServer.Services;
+using IdentityServer4.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -30,6 +34,8 @@ namespace IdentityServer
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
             services.AddMvc();
+
+            services.AddTransient<IEmailSender, EmailSender>();
             ///This Code adds identity Server
             services.AddIdentityServer()
                     //Creates temporary key material at startup time. This is for dev only scenarios when you don’t have a certificate to use. The generated key will be persisted to the file system so it stays stable between server restarts (can be disabled by passing false). This addresses issues when the client/api metadata caches get out of sync during development
@@ -38,16 +44,50 @@ namespace IdentityServer
                     //.AddTestUsers(Config.GetUsers())
                     .AddAspNetIdentity<ApplicationUser>()
                     // Adds in Memory Clients
-                    .AddInMemoryClients(Config.GetClients())
+                    .AddInMemoryClients(ConfigureClientResources())
+
+                    //Add Custom profile Service
+                    .AddProfileService<AspNetIdentityProfileService>()
+                    // Add In Memroy API Resources
+                    .AddInMemoryApiResources(ConfigureApiResources())
                     // Add In Memroy Identity Resources
                     .AddInMemoryIdentityResources(Config.GetIdentityResources());
-         
+                    
 
+
+            services.AddAuthentication();
 
         }
 
+        private IEnumerable<ApiResource> ConfigureApiResources()
+        {
+            var apiresourcesfromConfig = new List<ApiResource>();
+            var apiResources = new List<ApiResource>();
+            Configuration.GetSection("Clients:APiClient").Bind(apiresourcesfromConfig);
+            apiresourcesfromConfig.ForEach(apiResource => apiResources.Add(new ApiResource(apiResource.Name, apiResource.UserClaims)));
+            return apiResources;
+        }
+        private IEnumerable<Client> ConfigureClientResources()
+        {
+            var clientResources = new List<Client>();          
+            Configuration.GetSection("Clients:WebClient").Bind(clientResources);
+
+            clientResources.ForEach(clientResource => 
+            {
+                var clientSecrets = new List<Secret>();
+
+                foreach (var clientSecret in clientResource.ClientSecrets)
+
+                {
+                    clientSecrets.Add(new Secret(clientSecret.Value.Sha256(), null));
+                }
+                clientResource.ClientSecrets = clientSecrets;
+            });
+            return clientResources;
+        }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env,ILoggerFactory logger)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory logger)
         {
             logger.AddConsole();
             logger.AddDebug();

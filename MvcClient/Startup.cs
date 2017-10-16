@@ -7,6 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using MvcClient.Authorization;
+using Microsoft.AspNetCore.Http;
+using MvcClient.HttpClientService;
 
 namespace MvcClient
 {
@@ -30,39 +36,43 @@ namespace MvcClient
 
             services.AddAuthentication(options =>
                                         {
-                                            options.DefaultScheme = Configuration.GetValue<string>("DefaultScheme");
-                                            options.DefaultChallengeScheme = Configuration.GetValue<string>("DefaultChallengeScheme");
+                                            options.DefaultScheme ="cookies";
+                                            options.DefaultChallengeScheme ="oidc";
                                         })
-                                        .AddCookie(Configuration.GetValue<string>("DefaultScheme"))
-                                        .AddOpenIdConnect(Configuration.GetValue<string>("DefaultChallengeScheme"), options=> GetOpenIdConnectOptions(options));
-           services.Configure<OpenIdConnectOptions>( options => Configuration.GetSection("openIdConnectOptions").Bind(options));
+                                        .AddCookie("cookies")
+                                        .AddOpenIdConnect("oidc", options => { options.GetClaimsFromUserInfoEndpoint = true; GetOpenIdConnectOptions(options); });
+            services.AddAuthorization(authorizationOptions => authorizationOptions.AddPolicy("IsContributor",
+            policybuilder => 
+            {
+                policybuilder.RequireAuthenticatedUser();
+                policybuilder.AddRequirements(new AdministratorRequirement());
+            }));
 
+            services.AddSingleton<IAuthorizationHandler, IsContributor>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddTransient<IHttpClientProvider, HttpClientProvider>();
+            services.Configure<OpenIdConnectOptions>( options => { Configuration.GetSection("openIdConnectOptions").Bind(options); options.SignInScheme = "cookies"; });
+            
+            services.Configure<ApiClientOption>(options => Configuration.GetSection("ApiClientOption").Bind(options));
             services.AddMvc();
         }
 
         private void GetOpenIdConnectOptions(OpenIdConnectOptions options)
         {
-            //options =>
-            //{
-            //    options.Authority = "https://localhost:44314/";
-            //    options.RequireHttpsMetadata = true;
-            //    options.ClientId = "MVCClientId";
-            //    options.ClientSecret = "secret";
-            //    options.ResponseType = "code id_token";
-            //    options.SignInScheme = "MyCookieAuthenticationScheme";
-            //    options.SaveTokens = true;
-
-            //    options.GetClaimsFromUserInfoEndpoint = true;
-            //}
+            
             Configuration.GetSection("openIdConnectOptions").Bind(options);
             options.Events.OnUserInformationReceived = userinformationRecievedContext =>
             {
+                
                 return Task.FromResult(0);
             };
-            options.Events.OnTokenValidated = tokenValidationContext =>
+
+            options.Events.OnTokenValidated = tokenValidatedContext =>
             {
+
                 return Task.FromResult(0);
             };
+            options.SignInScheme = "cookies";
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
