@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography.X509Certificates;
 
 namespace IdentityServer
 {
@@ -39,7 +40,8 @@ namespace IdentityServer
             ///This Code adds identity Server
             services.AddIdentityServer()
                     //Creates temporary key material at startup time. This is for dev only scenarios when you don’t have a certificate to use. The generated key will be persisted to the file system so it stays stable between server restarts (can be disabled by passing false). This addresses issues when the client/api metadata caches get out of sync during development
-                    .AddDeveloperSigningCredential()
+                    //.AddDeveloperSigningCredential()
+                    .AddSigningCredential(new X509Certificate2(Configuration.GetSection("SignInCertificatePath").Value, Configuration.GetSection("SignInCertificatePassword").Value))
                     //Add Test Users
                     //.AddTestUsers(Config.GetUsers())
                     .AddAspNetIdentity<ApplicationUser>()
@@ -70,7 +72,7 @@ namespace IdentityServer
         private IEnumerable<Client> ConfigureClientResources()
         {
             var clientResources = new List<Client>();          
-            Configuration.GetSection("Clients:WebClient").Bind(clientResources);
+            Configuration.GetSection("Clients:WebClient:Client").Bind(clientResources);
 
             clientResources.ForEach(clientResource => 
             {

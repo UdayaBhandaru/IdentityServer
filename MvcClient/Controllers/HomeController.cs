@@ -37,7 +37,16 @@ namespace MvcClient.Controllers
         public async Task<IActionResult> About()
         {
             await WriteOutIdentityInformation();
-           
+            // get the saved identity token
+            ViewData["IdentityToken"] = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.IdToken);
+
+            //get the saved access token
+
+            ViewData["AccessToken"] = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+            var RefreshToken = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.RefreshToken); 
+            var expires_at = await HttpContext.GetTokenAsync("expires_at");
+            @ViewData["Expiration"] = DateTime.Parse(expires_at).AddSeconds(-60).ToUniversalTime();
+            @ViewData["UTC"] = DateTime.UtcNow;
 
             //
             var httpClient = await _httpClientProvider.GetClient(_apiClientOption.ApiClientBaseAddress);
@@ -77,6 +86,7 @@ namespace MvcClient.Controllers
         [Authorize]
         public async Task<IActionResult> Login()
         {
+
             var accessToken = await HttpContext.GetTokenAsync("access_token");
 
             var httpClient = await _httpClientProvider.GetClient(_apiClientOption.ApiClientBaseAddress);

@@ -6,8 +6,12 @@
 }
 
 <h2>  @ViewData["content"] </h2>
-
-
+<h2>Access Token</h2>  @ViewData["AccessToken"]
+<h2>Identity Token</h2>  @ViewData["IdentityToken"]
+<h2>Refresh Token</h2>  @ViewData["RefreshToken"]
+<h2>Expiration </h2>  @ViewData["Expiration"]
+<h2>UTC </h2>  @ViewData["UTC"]
+<br/>
 @if (authorize.Succeeded)
 {
     if (User.IsInRole("Administrator"))
