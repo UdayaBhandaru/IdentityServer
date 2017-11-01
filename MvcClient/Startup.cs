@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using MvcClient.Authorization;
 using Microsoft.AspNetCore.Http;
 using MvcClient.HttpClientService;
+using CustomAuthorizationRequirement;
 
 namespace MvcClient
 {

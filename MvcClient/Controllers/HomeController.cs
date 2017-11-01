@@ -37,6 +37,9 @@ namespace MvcClient.Controllers
         public async Task<IActionResult> About()
         {
             await WriteOutIdentityInformation();
+
+            var serviceDocEndpoint= await _httpClientProvider.GetServiceDocumentEndPoint();
+           var sdcontent=await serviceDocEndpoint.GetStringAsync("");
             // get the saved identity token
             ViewData["IdentityToken"] = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.IdToken);
 
@@ -66,7 +69,7 @@ namespace MvcClient.Controllers
                 var refreshAccessTokenResponse = await tokenrevocationClient.RevokeAccessTokenAsync(accessToken);
                 
             }
-            if (!string.IsNullOrEmpty(accessToken))
+            if (!string.IsNullOrEmpty(refreshToken))
             {
                 var tokenrevocationClient = await _httpClientProvider.GetTokenRevocationClient();
                 var refreshRefreshTokenResponse = await tokenrevocationClient.RevokeRefreshTokenAsync(refreshToken);

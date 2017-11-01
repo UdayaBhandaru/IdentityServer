@@ -11,13 +11,14 @@ using Microsoft.Extensions.Options;
 using CustomAuthorizationRequirement;
 using Microsoft.AspNetCore.Authorization;
 
-namespace APIClient
+namespace ApiCLient2
 {
     public class Startup
     {
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            // https://localhost:44325/
         }
 
         public IConfiguration Configuration { get; }
@@ -27,21 +28,16 @@ namespace APIClient
         {
             services.AddMvc();
             services.AddAuthentication("Bearer")
-               .AddIdentityServerAuthentication(options =>GetIdentityServerAuthenticationOptions(options));
-            services.AddAuthorization(authorizationOptions => authorizationOptions.AddPolicy("IsContributor",
-           policybuilder =>
-           {
-               policybuilder.RequireAuthenticatedUser();
-               policybuilder.AddRequirements(new AdministratorRequirement());
-           }));
-            services.AddSingleton<IAuthorizationHandler, IsContributor>();
+               .AddIdentityServerAuthentication(options => GetIdentityServerAuthenticationOptions(options));
+            
         }
 
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         private void GetIdentityServerAuthenticationOptions(IdentityServerAuthenticationOptions options)
         {
 
             Configuration.GetSection("IdentityServerAuthenticationOptions").Bind(options);
-            
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,3 +52,4 @@ namespace APIClient
         }
     }
 }
+

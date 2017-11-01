@@ -13,5 +13,7 @@ namespace MvcClient.HttpClientService
 
         Task<TokenRevocationClient> GetTokenRevocationClient();
 
+
+        Task<HttpClient> GetServiceDocumentEndPoint();
     }
 }

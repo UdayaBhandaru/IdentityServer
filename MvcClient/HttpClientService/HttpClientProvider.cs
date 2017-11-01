@@ -85,6 +85,21 @@ namespace MvcClient.HttpClientService
 
                 // create a new value for expires_at, and save it
                 var expiresAt = DateTime.UtcNow + TimeSpan.FromSeconds(tokenResult.ExpiresIn);
+                var accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+                var refreshToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.RefreshToken);
+
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    var tokenrevocationClient = await this.GetTokenRevocationClient();
+                    var refreshAccessTokenResponse = await tokenrevocationClient.RevokeAccessTokenAsync(accessToken);
+
+                }
+                if (!string.IsNullOrEmpty(refreshToken))
+                {
+                    var tokenrevocationClient = await this.GetTokenRevocationClient();
+                    var refreshRefreshTokenResponse = await tokenrevocationClient.RevokeRefreshTokenAsync(refreshToken);
+                }
+
                 authenticateInfo.Properties.UpdateTokenValue("expires_at",expiresAt.ToString("o", CultureInfo.InvariantCulture));
 
                 authenticateInfo.Properties.UpdateTokenValue(OpenIdConnectParameterNames.AccessToken,tokenResult.AccessToken);
@@ -110,6 +125,13 @@ namespace MvcClient.HttpClientService
             var tokenrevocationClient = new TokenRevocationClient(metaDataResponmse.RevocationEndpoint, _openIdConnectionOptions.ClientId, _openIdConnectionOptions.ClientSecret);
             return tokenrevocationClient;
 
+        }
+
+        public async Task<HttpClient> GetServiceDocumentEndPoint()
+        {
+            var discoverClient = new DiscoveryClient(_openIdConnectionOptions.Authority);
+            var metaDataResponmse = await discoverClient.GetAsync();
+            return new HttpClient() { BaseAddress = new Uri(metaDataResponmse.UserInfoEndpoint.Replace("connect/userinfo", "servicedoc/data")) };
         }
     }
 }

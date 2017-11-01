@@ -77,10 +77,14 @@ namespace IdentityServer.Controllers
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+                
+                
                 var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
+                   var user= _signInManager.UserManager.Users.FirstOrDefault(x => x.Email == model.Email);
+                    var securityStampresult =await _userManager.UpdateSecurityStampAsync(user);
                     return RedirectToLocal(returnUrl);
                 }
                 if (result.RequiresTwoFactor)

@@ -25,7 +25,7 @@ namespace IdentityServer.Models.AccountViewModels
         public string ConfirmPassword { get; set; }
 
         [Required]
-        [StringLength(8, ErrorMessage = "Please Enter Role", MinimumLength =5)]
+        [StringLength(20, ErrorMessage = "Please Enter Role", MinimumLength =5)]
         [Display(Name = "Role")]
         public string RoleName { get; set; }
     }

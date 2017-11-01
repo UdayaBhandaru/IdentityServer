@@ -12,6 +12,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography.X509Certificates;
+using IdentityServer4;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace IdentityServer
 {
@@ -52,12 +55,16 @@ namespace IdentityServer
                     .AddProfileService<AspNetIdentityProfileService>()
                     // Add In Memroy API Resources
                     .AddInMemoryApiResources(ConfigureApiResources())
-                    // Add In Memroy Identity Resources
-                    .AddInMemoryIdentityResources(Config.GetIdentityResources());
+                    .AddEndpoint<ServiceDocumentEndPoint>("serviceDoc", "/servicedoc/data")
                     
 
+                    // Add In Memroy Identity Resources
+                    .AddInMemoryIdentityResources(Config.GetIdentityResources());
 
-            services.AddAuthentication();
+
+            
+
+
 
         }
 
@@ -65,16 +72,28 @@ namespace IdentityServer
         {
             var apiresourcesfromConfig = new List<ApiResource>();
             var apiResources = new List<ApiResource>();
-            Configuration.GetSection("Clients:APiClient").Bind(apiresourcesfromConfig);
-            apiresourcesfromConfig.ForEach(apiResource => apiResources.Add(new ApiResource(apiResource.Name, apiResource.UserClaims)));
+            Configuration.GetSection("Clients:APiClient:ApiResource").Bind(apiresourcesfromConfig);
+            apiresourcesfromConfig.ForEach(apiResource => apiResources.Add(
+             new ApiResource(apiResource.Name, apiResource.UserClaims) { ApiSecrets=apiResource.ApiSecrets}));
+            apiResources.ForEach(clientResource =>
+            {
+                var clientSecrets = new List<Secret>();
+
+                foreach (var clientSecret in clientResource.ApiSecrets)
+
+                {
+                    clientSecrets.Add(new Secret(clientSecret.Value.Sha256(), null));
+                }
+                clientResource.ApiSecrets = clientSecrets;
+            });
             return apiResources;
         }
         private IEnumerable<Client> ConfigureClientResources()
         {
-            var clientResources = new List<Client>();          
+            var clientResources = new List<Client>();
             Configuration.GetSection("Clients:WebClient:Client").Bind(clientResources);
 
-            clientResources.ForEach(clientResource => 
+            clientResources.ForEach(clientResource =>
             {
                 var clientSecrets = new List<Secret>();
 
@@ -99,7 +118,8 @@ namespace IdentityServer
                 app.UseDeveloperExceptionPage();
             }
             app.UseIdentityServer();
-
+            
+            
             app.UseMvc();
             app.UseMvcWithDefaultRoute();
             app.UseStaticFiles();
